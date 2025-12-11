@@ -1,0 +1,139 @@
+"""
+Ham Radio Logger
+
+This file defines the main menu loop and stub functions
+for the different actions. The actual logic (file I/O,
+QSO prompts, stats, etc.) need to be implemented in the TODOs.
+"""
+
+import json   # will be useful later
+import os     # will be useful later
+
+# For now, keep the log file simple and in the same folder
+LOG_FILE = "qsolog.jsonl"
+
+
+def ensure_log_file_exists():
+    """
+    Make sure the log file exists so reading it later
+    doesn't crash with FileNotFoundError.
+    """
+    if not os.path.exists(LOG_FILE):
+        # Create an empty file
+        open(LOG_FILE, "a", encoding="utf-8").close()
+
+
+def show_main_menu():
+    """
+    Print the main menu and return the user's choice as a string.
+    """
+    print()
+    print("Ham Radio Logger - Main Menu")
+    print("1) Log a new QSO")
+    print("2) List recent QSOs")
+    print("3) Search QSOs")
+    print("4) Show stats")
+    print("5) Exit")
+    choice = input("Enter your choice: ").strip()
+    return choice
+
+
+def handle_log_new_qso():
+    """
+    Stub for logging a new QSO.
+
+    TODO:
+    - Prompt the user for QSO fields (their_call, band, etc.)
+    - Build a dict with the QSO data
+    - Append it as a JSON line to LOG_FILE
+    """
+    print()
+    print("[Log new QSO] (not implemented yet)")
+    # TODO: implement logging logic here
+    # Example steps (not code yet):
+    # 1. Ask for their callsign, band, mode, etc.
+    # 2. Build a QSO dict
+    # 3. Confirm with user
+    # 4. Save to file using JSONL format
+
+
+def handle_list_recent_qsos():
+    """
+    Stub for listing recent QSOs.
+
+    TODO:
+    - Ask how many QSOs to show (default 10)
+    - Read LOG_FILE
+    - Parse JSONL lines into dicts
+    - Show the last N QSOs in a readable format
+    """
+    print()
+    print("[List recent QSOs] (not implemented yet)")
+    # TODO: implement viewing logic here
+
+
+def handle_search_qsos():
+    """
+    Stub for searching QSOs.
+
+    TODO:
+    - Show a small submenu:
+        1) Search by callsign
+        2) Search by band
+        3) Search by mode
+    - Based on choice, ask for search term
+    - Filter QSOs loaded from LOG_FILE
+    - Display matches
+    """
+    print()
+    print("[Search QSOs] (not implemented yet)")
+    # TODO: implement search logic here
+
+
+def handle_show_stats():
+    """
+    Stub for showing statistics.
+
+    TODO:
+    - Load all QSOs from LOG_FILE
+    - Use collections.Counter to summarize:
+        - QSOs by band
+        - QSOs by mode
+        - Top N callsigns
+    - Print the results in a simple text format
+    """
+    print()
+    print("[Show stats] (not implemented yet)")
+    # TODO: implement stats logic here
+
+
+def main():
+    """
+    Main entry point for the ham radio logger.
+    Sets things up and runs the menu loop.
+    """
+    print("Welcome to the Ham Radio Logger!")
+    ensure_log_file_exists()
+
+    # Main loop
+    while True:
+        choice = show_main_menu()
+
+        if choice == "1":
+            handle_log_new_qso()
+        elif choice == "2":
+            handle_list_recent_qsos()
+        elif choice == "3":
+            handle_search_qsos()
+        elif choice == "4":
+            handle_show_stats()
+        elif choice == "5":
+            print("Goodbye and 73!")
+            break
+        else:
+            print()
+            print("Invalid choice, please try again.")
+
+
+if __name__ == "__main__":
+    main()
