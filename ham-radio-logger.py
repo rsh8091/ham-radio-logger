@@ -14,7 +14,7 @@ LOG_FILE = "qsolog.jsonl"
 MY_CALL = "AG5XY"
 
 
-def ensure_log_file_exists():
+def ensure_log_file_exists() -> None:
     """
     Make sure the log file exists so reading it later
     doesn't crash with FileNotFoundError.
@@ -24,7 +24,7 @@ def ensure_log_file_exists():
         open(LOG_FILE, "a", encoding="utf-8").close()
 
 
-def show_main_menu():
+def show_main_menu() -> None:
     """
     Print the main menu and return the user's choice as a string.
     """
@@ -38,8 +38,17 @@ def show_main_menu():
     choice = input("Enter your choice: ").strip()
     return choice
 
+def print_qso(qso: dict) -> None:
+    """
+    - Loop through dict and print. First implementation is a naive one on each line.
+    """
+    
+    for key, value in qso.items():
+        label = key
+        label = label.replace("_", " ").title()
+        print(f"{label}: {value}")
 
-def handle_log_new_qso():
+def handle_log_new_qso() -> None:
     """
     - Prompt the user for QSO fields (their_call, band, etc.)
     - Build a dict with the QSO data
@@ -65,8 +74,7 @@ def handle_log_new_qso():
     qso["comments"] = comments
     print()
     print("Thank you. Here is what you entered. ")
-    for key, value in qso.items():
-        print(f"{key}: {value}")
+    print_qso(qso)
     print ("Save to log file Y/N?")
     write_to_log = input().strip()
     if (write_to_log.upper() == "Y"):
@@ -76,7 +84,7 @@ def handle_log_new_qso():
     else:
         print ("QSO not saved. Returning to main menu")
 
-def handle_list_recent_qsos():
+def handle_list_recent_qsos() -> None:
     """
     Stub for listing recent QSOs.
 
@@ -91,7 +99,7 @@ def handle_list_recent_qsos():
     # TODO: implement viewing logic here
 
 
-def handle_search_qsos():
+def handle_search_qsos() -> None:
     """
     Stub for searching QSOs.
 
@@ -109,7 +117,7 @@ def handle_search_qsos():
     # TODO: implement search logic here
 
 
-def handle_show_stats():
+def handle_show_stats() -> None:
     """
     Stub for showing statistics.
 
@@ -131,7 +139,7 @@ def main():
     Main entry point for the ham radio logger.
     Sets things up and runs the menu loop.
     """
-    print("Welcome to the Ham Radio Logger!")
+    print("Welcome to the Ham Radio Logger by " + MY_CALL + "!")
     ensure_log_file_exists()
 
     # Main loop
