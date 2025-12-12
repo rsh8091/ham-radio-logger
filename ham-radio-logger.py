@@ -11,6 +11,7 @@ import os     # will be useful later
 
 # For now, keep the log file simple and in the same folder
 LOG_FILE = "qsolog.jsonl"
+MY_CALL = "AG5XY"
 
 
 def ensure_log_file_exists():
@@ -40,22 +41,40 @@ def show_main_menu():
 
 def handle_log_new_qso():
     """
-    Stub for logging a new QSO.
-
-    TODO:
     - Prompt the user for QSO fields (their_call, band, etc.)
     - Build a dict with the QSO data
-    - Append it as a JSON line to LOG_FILE
+    - Append it as a JSON line to LOG_FILE if the user wants, if not, if they want to change it, let them.
+    If they dont' want to write at all, return to main menu
     """
+    
+    qso = {}
+    print ("Enter their call sign:")
+    their_call = input().strip().upper()
+    qso ["call_sign"] = their_call
+    print ("Enter signal report they gave you:")
+    their_report = input().strip()
+    qso ["their_signal_report"] = their_report
+    print ("Enter signal report you gave them")
+    my_report = input().strip()
+    qso["my_signal_report"] = my_report
+    print ("Enter QSO band:")
+    band = input().strip()
+    qso["band"] = band
+    print ("Enter any other comments you want to about this QSO:")
+    comments = input().strip()
+    qso["comments"] = comments
     print()
-    print("[Log new QSO] (not implemented yet)")
-    # TODO: implement logging logic here
-    # Example steps (not code yet):
-    # 1. Ask for their callsign, band, mode, etc.
-    # 2. Build a QSO dict
-    # 3. Confirm with user
-    # 4. Save to file using JSONL format
-
+    print("Thank you. Here is what you entered. ")
+    for key, value in qso.items():
+        print(f"{key}: {value}")
+    print ("Save to log file Y/N?")
+    write_to_log = input().strip()
+    if (write_to_log.upper() == "Y"):
+        with open(LOG_FILE, "a", encoding="utf-8") as file:
+            file.write(json.dumps(qso) + "\n")
+        print ("QSO saved. Returning to main menu")
+    else:
+        print ("QSO not saved. Returning to main menu")
 
 def handle_list_recent_qsos():
     """
