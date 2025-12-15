@@ -6,8 +6,8 @@ for the different actions. The actual logic (file I/O,
 QSO prompts, stats, etc.) need to be implemented in the TODOs.
 """
 
-import json   # will be useful later
-import os     # will be useful later
+import json  # will be useful later
+import os  # will be useful later
 
 # For now, keep the log file simple and in the same folder
 LOG_FILE = "qsolog.jsonl"
@@ -24,6 +24,26 @@ def ensure_log_file_exists() -> None:
         open(LOG_FILE, "a", encoding="utf-8").close()
 
 
+def load_all_qsos(filename: str) -> list[dict]:
+
+    qso_list = []
+
+    # First see if file exists, and if not return an empty list
+
+    if not os.path.exists(filename):
+        return qso_list
+
+    # Now, get the lines, strip them, and add them to list if not blank.
+
+    with open(filename, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+            if line == "":
+                continue
+            qso_list.append(json.loads(line))
+    return qso_list
+
+
 def show_main_menu() -> None:
     """
     Print the main menu and return the user's choice as a string.
@@ -38,15 +58,17 @@ def show_main_menu() -> None:
     choice = input("Enter your choice: ").strip()
     return choice
 
+
 def print_qso(qso: dict) -> None:
     """
     - Loop through dict and print. First implementation is a naive one on each line.
     """
-    
+
     for key, value in qso.items():
         label = key
         label = label.replace("_", " ").title()
         print(f"{label}: {value}")
+
 
 def handle_log_new_qso() -> None:
     """
@@ -55,48 +77,76 @@ def handle_log_new_qso() -> None:
     - Append it as a JSON line to LOG_FILE if the user wants, if not, if they want to change it, let them.
     If they dont' want to write at all, return to main menu
     """
-    
+
     qso = {}
-    print ("Enter their call sign:")
+    print("Enter their call sign:")
     their_call = input().strip().upper()
-    qso ["call_sign"] = their_call
-    print ("Enter signal report they gave you:")
+    qso["call_sign"] = their_call
+    print("Enter signal report they gave you:")
     their_report = input().strip()
-    qso ["their_signal_report"] = their_report
-    print ("Enter signal report you gave them")
+    qso["their_signal_report"] = their_report
+    print("Enter signal report you gave them")
     my_report = input().strip()
     qso["my_signal_report"] = my_report
-    print ("Enter QSO band:")
+    print("Enter QSO band:")
     band = input().strip()
     qso["band"] = band
-    print ("Enter any other comments you want to about this QSO:")
+    print("Enter any other comments you want to about this QSO:")
     comments = input().strip()
     qso["comments"] = comments
     print()
     print("Thank you. Here is what you entered. ")
     print_qso(qso)
-    print ("Save to log file Y/N?")
+    print("Save to log file Y/N?")
     write_to_log = input().strip()
-    if (write_to_log.upper() == "Y"):
+    if write_to_log.upper() == "Y":
         with open(LOG_FILE, "a", encoding="utf-8") as file:
             file.write(json.dumps(qso) + "\n")
-        print ("QSO saved. Returning to main menu")
+        print("QSO saved. Returning to main menu")
     else:
-        print ("QSO not saved. Returning to main menu")
+        print("QSO not saved. Returning to main menu")
+
 
 def handle_list_recent_qsos() -> None:
     """
-    Stub for listing recent QSOs.
-
-    TODO:
-    - Ask how many QSOs to show (default 10)
-    - Read LOG_FILE
-    - Parse JSONL lines into dicts
-    - Show the last N QSOs in a readable format
+    Fundtion to  print last n QSOs
     """
     print()
-    print("[List recent QSOs] (not implemented yet)")
-    # TODO: implement viewing logic here
+    print("How many QSOs do you want to see (default is 10)")
+    qso_input = input().strip()
+    if qso_input == "":
+        num_qsos = 10
+    else:
+        try:
+            num_qsos = int(qso_input)
+            if num_qsos <= 0:
+                print("Can't use numbers < 1. Using default instead")
+                num_qsos = 10
+        except ValueError:
+            print("Invalid input. Using default.")
+            num_qsos = 10
+
+    # Now that we know the requested number of QSOs, get the set of them and print them.
+
+    print("Attemptint to print the last " + str(num_qsos) + " QSOs")
+    print()
+
+    qso_list = load_all_qsos(LOG_FILE)
+    if qso_list:
+
+        # OK, we have some to print, do a slice on the list and print them:
+
+        if num_qsos > len(qso_list):
+            print("Sorry, there are not " + str(num_qsos) + " in the file")
+            num_qsos = len(qso_list)
+            print("Printing last " + str(num_qsos) + " instead:")
+
+        recent_qsos = qso_list[-num_qsos:]
+        for qso in recent_qsos:
+            print_qso(qso)
+    else:
+        print("Sorry, no QSOs to print")
+    return None
 
 
 def handle_search_qsos() -> None:
