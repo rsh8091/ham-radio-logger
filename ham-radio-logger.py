@@ -151,20 +151,33 @@ def handle_list_recent_qsos() -> None:
 
 def handle_search_qsos() -> None:
     """
-    Stub for searching QSOs.
+    Functionfor searching QSOs.
 
-    TODO:
-    - Show a small submenu:
-        1) Search by callsign
-        2) Search by band
-        3) Search by mode
-    - Based on choice, ask for search term
-    - Filter QSOs loaded from LOG_FILE
-    - Display matches
+    - Search call sign for now
+    - Let user know if not found.
+    - If found, print number found, and then all instances..
     """
     print()
-    print("[Search QSOs] (not implemented yet)")
-    # TODO: implement search logic here
+    search_list = load_all_qsos(LOG_FILE)
+    if not search_list:
+        print("No QSOs to search. Returning to main menu.")
+        return None
+
+    print("Enter call sign to search:")
+    search_call = input().strip().upper()
+
+    # Loop through list and count the QSOs by accessing each dictionary
+
+    qso_counter = 0
+    for qso in search_list:
+        if qso.get("call_sign") == search_call:
+            print_qso(qso)
+            qso_counter += 1
+    if qso_counter > 0:
+        print("Found " + str(qso_counter) + " instances.")
+    else:
+        print("Call sign " + search_call + " not found.")
+    return None
 
 
 def handle_show_stats() -> None:
