@@ -89,10 +89,10 @@ def handle_log_new_qso() -> None:
     print("Enter signal report you gave them")
     my_report = input().strip()
     qso["my_signal_report"] = my_report
-    print("Enter QSO band:")
+    print("Enter QSO band: (put mode information in mode field)")
     band = input().strip()
     qso["band"] = band
-    print("Enter any other comments you want to about this QSO:")
+    print("Enter any other comments you want to about this QSO (Enter for none):")
     comments = input().strip()
     qso["comments"] = comments
     print()
@@ -237,8 +237,8 @@ def handle_show_stats() -> None:
     - Load all QSOs from LOG_FILE
     - Use collections.Counter to summarize:
         - Total QSOs
-        - Top 10 QSOs by call sign
-        - Top 5 QSOS by band
+        - At least top 10 QSOs by call sign
+        - At least top 5 QSOS by band
     - Print the results in a simple text format
     """
 
@@ -251,11 +251,17 @@ def handle_show_stats() -> None:
 
     total_qsos = len(qso_list)
     print("Total number of QSOs is " + str(total_qsos))
-    print("Here are the most common call signs in your log")
+    print()
+    print("Here are the most common call signs in your log:")
     call_counter = count_qso_field(qso_list, "call_sign")
     call_list = call_counter.most_common(10)
     for call, value in call_list:
         print(str(call) + " : " + str(value))
+    print("Here are the most common bands in your log:")
+    band_counter = count_qso_field(qso_list, "band")
+    band_list = band_counter.most_common(5)
+    for band, value in band_list:
+        print(str(band) + " : " + str(value))
     return None
 
 
