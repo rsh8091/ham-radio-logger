@@ -8,6 +8,7 @@ QSO prompts, stats, etc.) need to be implemented in the TODOs.
 
 import json  # will be useful later
 import os  # will be useful later
+from collections import Counter
 
 # For now, keep the log file simple and in the same folder
 LOG_FILE = "qsolog.jsonl"
@@ -180,21 +181,82 @@ def handle_search_qsos() -> None:
     return None
 
 
-def handle_show_stats() -> None:
+def handle_search_qsos() -> None:
     """
-    Stub for showing statistics.
+    Functionfor searching QSOs.
 
-    TODO:
-    - Load all QSOs from LOG_FILE
-    - Use collections.Counter to summarize:
-        - QSOs by band
-        - QSOs by mode
-        - Top N callsigns
-    - Print the results in a simple text format
+    - Search call sign for now
+    - Let user know if not found.
+    - If found, print number found, and then all instances..
     """
     print()
-    print("[Show stats] (not implemented yet)")
-    # TODO: implement stats logic here
+    search_list = load_all_qsos(LOG_FILE)
+    if not search_list:
+        print("No QSOs to search. Returning to main menu.")
+        return None
+
+    print("Enter call sign to search:")
+    search_call = input().strip().upper()
+
+    # Loop through list and count the QSOs by accessing each dictionary
+
+    qso_counter = 0
+    for qso in search_list:
+        if qso.get("call_sign") == search_call:
+            print_qso(qso)
+            qso_counter += 1
+    if qso_counter > 0:
+        print("Found " + str(qso_counter) + " instances.")
+    else:
+        print("Call sign " + search_call + " not found.")
+    return None
+
+
+def count_qso_field(qso_list: list[dict], field_name: str) -> Counter:
+    """
+    Count occurrences of a given field across all QSOs.
+
+    - Iterates through the QSO list
+    - Extracts the specified field from each QSO
+    - Normalizes values (strip + uppercase)
+    - Returns a Counter of field values
+    """
+
+    counter = Counter()
+    for qso in qso_list:
+        clean_key = qso.get(field_name)
+        if clean_key == None:
+            continue
+        clean_key = clean_key.strip().upper()
+        counter[clean_key] += 1
+    return counter
+
+
+def handle_show_stats() -> None:
+    """
+    - Load all QSOs from LOG_FILE
+    - Use collections.Counter to summarize:
+        - Total QSOs
+        - Top 10 QSOs by call sign
+        - Top 5 QSOS by band
+    - Print the results in a simple text format
+    """
+
+    print()
+    print("Here is a summary of your log's statistics:")
+    qso_list = load_all_qsos(LOG_FILE)
+    if qso_list == []:
+        print("no QSOs to run statistics on, returning to main menu.")
+        return None
+
+    total_qsos = len(qso_list)
+    print("Total number of QSOs is " + str(total_qsos))
+    print("Here are the most common call signs in your log")
+    call_counter = count_qso_field(qso_list, "call_sign")
+    call_list = call_counter.most_common(10)
+    for call, value in call_list:
+        print(str(call) + " : " + str(value))
+    return None
 
 
 def main():
