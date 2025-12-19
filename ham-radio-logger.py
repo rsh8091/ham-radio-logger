@@ -45,7 +45,7 @@ def load_all_qsos(filename: str) -> list[dict]:
     return qso_list
 
 
-def show_main_menu() -> None:
+def show_main_menu() -> int:
     """
     Print the main menu and return the user's choice as a string.
     """
@@ -62,7 +62,7 @@ def show_main_menu() -> None:
 
 def print_qso(qso: dict) -> None:
     """
-    - Loop through dict and print. First implementation is a naive one on each line.
+    - Loop through dict and print.
     """
 
     for key, value in qso.items():
@@ -75,8 +75,7 @@ def handle_log_new_qso() -> None:
     """
     - Prompt the user for QSO fields (their_call, band, etc.)
     - Build a dict with the QSO data
-    - Append it as a JSON line to LOG_FILE if the user wants, if not, if they want to change it, let them.
-    If they dont' want to write at all, return to main menu
+    - Append it as a JSON line to LOG_FILE if the user wants, if not, return to main menu.
     """
 
     qso = {}
@@ -90,8 +89,11 @@ def handle_log_new_qso() -> None:
     my_report = input().strip()
     qso["my_signal_report"] = my_report
     print("Enter QSO band: (put mode information in mode field)")
-    band = input().strip()
+    band = input().strip().upper()
     qso["band"] = band
+    print("Enter QSO mode:")
+    mode = input().strip().upper()
+    qso["mode"] = mode
     print("Enter any other comments you want to about this QSO (Enter for none):")
     comments = input().strip()
     qso["comments"] = comments
@@ -99,13 +101,16 @@ def handle_log_new_qso() -> None:
     print("Thank you. Here is what you entered. ")
     print_qso(qso)
     print("Save to log file Y/N?")
-    write_to_log = input().strip()
-    if write_to_log.upper() == "Y":
+    write_to_log = input().strip().upper()
+    if write_to_log == "Y":
         with open(LOG_FILE, "a", encoding="utf-8") as file:
             file.write(json.dumps(qso) + "\n")
         print("QSO saved. Returning to main menu")
-    else:
+    elif write_to_log == "N":
         print("QSO not saved. Returning to main menu")
+    else:
+        print("Invalid input, returning to main menu.")
+    return None
 
 
 def handle_list_recent_qsos() -> None:
@@ -181,37 +186,6 @@ def handle_search_qsos() -> None:
     return None
 
 
-def handle_search_qsos() -> None:
-    """
-    Functionfor searching QSOs.
-
-    - Search call sign for now
-    - Let user know if not found.
-    - If found, print number found, and then all instances..
-    """
-    print()
-    search_list = load_all_qsos(LOG_FILE)
-    if not search_list:
-        print("No QSOs to search. Returning to main menu.")
-        return None
-
-    print("Enter call sign to search:")
-    search_call = input().strip().upper()
-
-    # Loop through list and count the QSOs by accessing each dictionary
-
-    qso_counter = 0
-    for qso in search_list:
-        if qso.get("call_sign") == search_call:
-            print_qso(qso)
-            qso_counter += 1
-    if qso_counter > 0:
-        print("Found " + str(qso_counter) + " instances.")
-    else:
-        print("Call sign " + search_call + " not found.")
-    return None
-
-
 def count_qso_field(qso_list: list[dict], field_name: str) -> Counter:
     """
     Count occurrences of a given field across all QSOs.
@@ -237,8 +211,9 @@ def handle_show_stats() -> None:
     - Load all QSOs from LOG_FILE
     - Use collections.Counter to summarize:
         - Total QSOs
-        - At least top 10 QSOs by call sign
-        - At least top 5 QSOS by band
+        - At least top 10 call signs
+        - At least top 5bands
+        - At least top 5 modes.
     - Print the results in a simple text format
     """
 
@@ -262,6 +237,12 @@ def handle_show_stats() -> None:
     band_list = band_counter.most_common(5)
     for band, value in band_list:
         print(str(band) + " : " + str(value))
+    print()
+    print("Here are the most common modes in your log")
+    mode_counter = count_qso_field(qso_list, "mode")
+    mode_list = mode_counter.most_common(5)
+    for mode, value in mode_list:
+        print(str(mode) + " : " + str(value))
     return None
 
 
