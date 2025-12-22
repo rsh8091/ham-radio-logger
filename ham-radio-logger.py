@@ -178,14 +178,20 @@ def handle_search_qsos() -> None:
     search_choice = input().strip()
     if search_choice == "1":
 
-        print("Enter call sign to search:")
+        print("Enter call sign to search.")
+        print(
+            "If you are not sure of the whole call, type what you remember and I'll search for that."
+        )
+        print("Be careful. Ttyping one letter could get you a lot of calls:")
         search_call = input().strip().upper()
 
         # Loop through list and count the QSOs by accessing each dictionary
+        # A match counts if we have a partial match (contains substring)
 
         qso_counter = 0
         for qso in search_list:
-            if qso.get("call_sign") == search_call:
+            stored_value = qso.get("call_sign", "").upper()
+            if search_call in stored_value:
                 print_qso(qso)
                 qso_counter += 1
         if qso_counter > 0:
@@ -195,8 +201,7 @@ def handle_search_qsos() -> None:
         else:
             print("Call sign " + search_call + " not found.")
     elif search_choice == "2":
-
-        print("Enter band to search for:")
+        print("Enter band to search for (will only do exact matches here):")
         search_band = input().strip().upper()
 
         # Loop through list and count the QSOs by accessing each dictionary
@@ -219,7 +224,7 @@ def handle_search_qsos() -> None:
 
     elif search_choice == "3":
 
-        print("Enter mode to search for:")
+        print("Enter mode to search for (will only do exact matches here):")
         search_mode = input().strip().upper()
 
         # Loop through list and count the QSOs by accessing each dictionary
@@ -238,7 +243,7 @@ def handle_search_qsos() -> None:
                 + " mode."
             )
         else:
-            print("Nothing found for mode " + str(search_mode) + " .")
+            print("Nothing found for mode " + str(search_mode) + ".")
 
     else:
         print("You have entered an invalid search choice. Returning to main menu")
