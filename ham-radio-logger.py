@@ -45,7 +45,7 @@ def load_all_qsos(filename: str) -> list[dict]:
     return qso_list
 
 
-def show_main_menu() -> int:
+def show_main_menu() -> str:
     """
     Print the main menu and return the user's choice as a string.
     """
@@ -55,7 +55,8 @@ def show_main_menu() -> int:
     print("2) List recent QSOs")
     print("3) Search QSOs")
     print("4) Show stats")
-    print("5) Exit")
+    print("5) Look up call sign in HamQTH:" + " (requires internet connection)")
+    print("6) Exit")
     choice = input("Enter your choice: ").strip()
     return choice
 
@@ -310,6 +311,32 @@ def handle_show_stats() -> None:
     return None
 
 
+def handle_hamqth_callbook_lookup() -> None:
+    """
+    Stub handler for HamQTH callbook lookup.
+
+    Future behavior:
+    - Prompt for a callsign
+    - Call hamqth_api.callbook_lookup(callsign)
+    - Display selected callbook fields
+
+    For now:
+    - Just collect input and confirm flow works
+    """
+    print()
+    print("HamQTH Callbook Lookup")
+    print("Enter callsign to look up:")
+    call_sign = input().strip().upper()
+
+    if call_sign == "":
+        print("No callsign entered. Returning to main menu.")
+        return None
+
+    # Placeholder until API logic is implemented
+    print(f"(Stub) Would look up HamQTH callbook info for {call_sign}.")
+    return None
+
+
 def main():
     """
     Main entry point for the ham radio logger.
@@ -331,6 +358,8 @@ def main():
         elif choice == "4":
             handle_show_stats()
         elif choice == "5":
+            handle_hamqth_callbook_lookup()
+        elif choice == "6":
             print("Goodbye and 73!")
             break
         else:
