@@ -159,9 +159,9 @@ def handle_search_qsos() -> None:
     """
     Functionfor searching QSOs.
 
-    - Search call sign for now
+    - Extend to search for band, mode, or call sign.
     - Let user know if not found.
-    - If found, print number found, and then all instances..
+    - If found, print all instances and then total.
     """
     print()
     search_list = load_all_qsos(LOG_FILE)
@@ -169,20 +169,79 @@ def handle_search_qsos() -> None:
         print("No QSOs to search. Returning to main menu.")
         return None
 
-    print("Enter call sign to search:")
-    search_call = input().strip().upper()
+    # Print the search menu.
 
-    # Loop through list and count the QSOs by accessing each dictionary
+    print("Type 1 to search by call sign.")
+    print("Type 2 to search by band")
+    print("Type 3 to search by mode.")
+    print("Enter choice:")
+    search_choice = input().strip()
+    if search_choice == "1":
 
-    qso_counter = 0
-    for qso in search_list:
-        if qso.get("call_sign") == search_call:
-            print_qso(qso)
-            qso_counter += 1
-    if qso_counter > 0:
-        print("Found " + str(qso_counter) + " instances.")
+        print("Enter call sign to search:")
+        search_call = input().strip().upper()
+
+        # Loop through list and count the QSOs by accessing each dictionary
+
+        qso_counter = 0
+        for qso in search_list:
+            if qso.get("call_sign") == search_call:
+                print_qso(qso)
+                qso_counter += 1
+        if qso_counter > 0:
+            print(
+                "Found " + str(qso_counter) + " instances of " + str(search_call) + "."
+            )
+        else:
+            print("Call sign " + search_call + " not found.")
+    elif search_choice == "2":
+
+        print("Enter band to search for:")
+        search_band = input().strip().upper()
+
+        # Loop through list and count the QSOs by accessing each dictionary
+
+        qso_counter = 0
+        for qso in search_list:
+            if qso.get("band") == search_band:
+                print_qso(qso)
+                qso_counter += 1
+        if qso_counter > 0:
+            print(
+                "Found "
+                + str(qso_counter)
+                + " instances of band "
+                + str(search_band)
+                + "."
+            )
+        else:
+            print("Nothing found for the " + str(search_band) + " band")
+
+    elif search_choice == "3":
+
+        print("Enter mode to search for:")
+        search_mode = input().strip().upper()
+
+        # Loop through list and count the QSOs by accessing each dictionary
+
+        qso_counter = 0
+        for qso in search_list:
+            if qso.get("mode") == search_mode:
+                print_qso(qso)
+                qso_counter += 1
+        if qso_counter > 0:
+            print(
+                "Found "
+                + str(qso_counter)
+                + " instances of the "
+                + str(search_mode)
+                + " mode."
+            )
+        else:
+            print("Nothing found for mode " + str(search_mode) + " .")
+
     else:
-        print("Call sign " + search_call + " not found.")
+        print("You have entered an invalid search choice. Returning to main menu")
     return None
 
 
