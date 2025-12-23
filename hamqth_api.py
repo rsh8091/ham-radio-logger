@@ -17,10 +17,11 @@ Public interface (what your main program will import/use):
 """
 
 # TODO: Imports you will likely need:
-# - os (for environment variables)
 # - datetime/time (for session expiry)
 # - requests (HTTP client)
 # - xml.etree.ElementTree (XML parsing)
+
+import os
 
 
 class HamQTHError(Exception):
@@ -35,14 +36,15 @@ class HamQTHError(Exception):
 # TODO: Put session lifetime seconds here (about 3600).
 # TODO: Put a short PROGRAM_NAME string here.
 
+HAMQTH_USER = "rsh8091"
+HAMQTH_PASS = "123456"
+
 
 # -----------------------------
 # Module state (session cache)
 # -----------------------------
 # TODO: Store session id and expiry here.
 # Example idea:
-# _session_id = None
-# _session_expires_at = None
 
 
 # -----------------------------
@@ -88,9 +90,32 @@ def callbook_lookup(call_sign: str) -> dict:
 # -----------------------------
 # Internal helpers (private)
 # -----------------------------
-def _load_credentials():
-    """TODO: Read HAMQTH_USER and HAMQTH_PASS from environment variables."""
-    raise NotImplementedError
+def _load_credentials() -> tuple[str, str]:
+    """
+    - Read HAMQTH_USER and HAMQTH_PASS from environment variables.
+    - If they exists return them
+    - If one does not, raise an exception
+    """
+
+    user_name = os.getenv("HAMQTH_USER")
+    if user_name is None:
+        user_name = ""
+    user_name = user_name.strip()
+
+    user_pw = os.getenv("HAMQTH_PASS")
+    if user_pw is None:
+        user_pw = ""
+    user_pw = user_pw.strip()
+
+    if not user_name or not user_pw:
+
+        # We do not have a value for one of these, so rais an exception
+
+        raise HamQTHError(
+            "HamQTH credentials not set. Please set HAMQTH_USER and HAMQTH_PASS."
+        )
+
+    return user_name, user_pw
 
 
 def _get_session_id() -> str:
