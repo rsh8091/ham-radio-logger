@@ -36,9 +36,8 @@ class HamQTHError(Exception):
 # TODO: Put session lifetime seconds here (about 3600).
 # TODO: Put a short PROGRAM_NAME string here.
 
-HAMQTH_USER = "rsh8091"
-HAMQTH_PASS = "123456"
-
+ENV_HAMQTH_USER = "HAMQTH_USER"
+ENV_HAMQTH_PASS = "HAMQTH_PASS"
 
 # -----------------------------
 # Module state (session cache)
@@ -97,12 +96,12 @@ def _load_credentials() -> tuple[str, str]:
     - If one does not, raise an exception
     """
 
-    user_name = os.getenv("HAMQTH_USER")
+    user_name = os.getenv(ENV_HAMQTH_USER)
     if user_name is None:
         user_name = ""
     user_name = user_name.strip()
 
-    user_pw = os.getenv("HAMQTH_PASS")
+    user_pw = os.getenv(ENV_HAMQTH_PASS)
     if user_pw is None:
         user_pw = ""
     user_pw = user_pw.strip()
