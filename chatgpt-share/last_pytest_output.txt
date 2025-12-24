@@ -1,0 +1,13 @@
+﻿
+=================================== ERRORS ====================================
+_________________________ ERROR collecting tests.txt __________________________
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:793: in read_text
+    return f.read()
+           ^^^^^^^^
+<frozen codecs>:325: in decode
+    ???
+E   UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+=========================== short test summary info ===========================
+ERROR tests.txt - UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in...
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.15s

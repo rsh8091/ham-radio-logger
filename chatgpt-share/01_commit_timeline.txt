@@ -1,0 +1,14 @@
+﻿16b8947 Initial commit
+c8da6d9 Initial version with stubs
+95fc9d3 Log QSO handler fnished
+2711aa6 Refactored to use a new print QSO helper function
+d699049 Finished recent QSO handler
+6320d0e Finished searching by QSO
+2f50a70 Half of the stats function done
+5079ba1 Stats function completed. Also updated some messages.
+ab3606f Added mode support for new QSOs and stats. New .gitignore file
+dbccade Added mode and band to search
+bdb39c8 Added call sign partial match to search
+f431dac Stubs in main file before API work
+299f958 Stub of API module for HamQTH
+657a984 First API function complete before unit tests
