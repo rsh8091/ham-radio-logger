@@ -163,102 +163,147 @@ We implemented and validated `_http_get`, `_parse_xml`, and a new validation hel
 
 ## For Tomorrow (next session)
 
-Plan for Tomorrow (2025-12-30)
-Goal
+0) Start-of-session baseline (5 minutes)
 
-Move from “foundation helpers” into real HamQTH behavior by adding XML interpretation + session scaffolding, still test-first and beginner-friendly.
-
-Step 0: Resume checklist
-
-Open repo and run baseline tests:
+Run from repo root:
 
 python -m pytest -q
 
 
-Confirm everything is green before changing anything.
+Goal: all green before you touch anything.
 
-### Step 1: XML error handling helpers (tests first)
+1) _extract_error_message(root) (tests first, then implement)
+1A) Create test file
 
-Target helpers
+Create: tests/test_xml_errors.py
 
-_extract_error_message(root)
+1B) Add tests (first round)
 
-_is_session_error(err_msg)
+Write tests that use _parse_xml to build a root element.
 
-_is_not_found_error(err_msg)
+Test cases:
 
-Approach
+XML has <error>…</error> → returns that text
 
-Write tests using tiny, hand-written XML strings (no network).
+XML has no <error> → returns None
 
-Parse XML with your existing _parse_xml.
+<error> exists but is whitespace → returns None (optional but nice)
 
-_extract_error_message should return:
+Run:
 
-the <error> text if present
+python -m pytest -q tests/test_xml_errors.py
 
-otherwise None
 
-_is_session_error / _is_not_found_error start as simple string-matching helpers.
+Expect failures (stub or missing function).
 
-Stop when
+1C) Implement _extract_error_message(root)
 
-Tests clearly express the behavior and all pass.
+Minimal behavior:
 
-### Step 2: Session ID extraction (tests first)
+find the <error> element
 
-Target helper
+get its text
 
-_extract_session_id(root)
+strip it
 
-Approach
+return stripped text or None
 
-Write tests with minimal “login response” XML snippets.
+Run tests again until green.
 
-Return session id string when present, else None.
+2) _is_session_error(msg) + _is_not_found_error(msg) (tests first)
+2A) Add tests to the same file
 
-Stop when
+Add tests for each helper:
 
-Tests cover “present” and “missing/malformed” and all pass.
+_is_session_error should return True when message indicates session trouble.
+_is_not_found_error should return True when message indicates callsign not found.
 
-### Step 3: Session lifecycle (design first, minimal code)
+Keep it simple: start with case-insensitive substring checks.
 
-Target helpers
+Run:
 
-_get_session_id()
+python -m pytest -q tests/test_xml_errors.py
 
-_login_and_create_session()
+2B) Implement helpers
 
-Approach
+Minimal behavior:
 
-Add/confirm module-level cached state (session id + expiry).
+if msg is falsy → False
 
-Write docstrings/comments describing intended behavior.
+compare msg.lower() to known substrings
 
-Optionally write placeholder tests that describe intent (even if they fail initially).
+Green tests.
 
-Do not wire into callbook_lookup yet.
+3) _extract_session_id(root) (tests first, then implement)
+3A) Create test file
 
-Stop when
+Create: tests/test_session_extract.py
 
-We have clear design and minimal scaffolding, but not full integration.
+3B) Add tests using tiny login XML
 
-### Step 4: Intentional stop point
+Test cases:
 
-Stop before:
+session id present → returns it
 
-real HamQTH login over the network
+session missing → returns None
 
-parsing full callbook responses
+session present but whitespace → returns None
 
-integrating into callbook_lookup
+Run:
 
-Tomorrow is about confidence + clarity, not completeness.
+python -m pytest -q tests/test_session_extract.py
 
-### Copy/paste kickoff context for the next session
+3C) Implement _extract_session_id(root)
+
+Minimal behavior:
+
+find <session_id>
+
+read text, strip, return string or None
+
+Run until green.
+
+4) (Optional tomorrow) Add formatting stub so MVP printing is ready
+
+If we have time and energy:
+
+4A) Create tests/test_formatting.py
+
+Test: given a sample dict, format_callbook_result() returns a readable multi-line string.
+
+Example dict keys to support:
+
+callsign, name, qth, country, grid
+
+4B) Stub the function
+
+In hamqth_api.py:
+
+format_callbook_result(result: dict) -> str
+
+Use simple “Label: value” lines
+
+No tables (screen-reader friendly)
+
+5) End-of-session wrap-up (2 minutes)
+
+Run the full suite again:
+
+python -m pytest -q
+
+
+Then add 5–10 lines to your notes:
+
+what helpers were added
+
+what tests were added
+
+what the next step is (session caching + lookup)### Copy/paste kickoff context for the next session
+
+## Plan for tomorrow
+
 
 Paste this at the top of tomorrow’s chat:
-
 I am continuing a beginner-friendly Python HamQTH API project on Windows.
 
 Current state:
@@ -267,9 +312,9 @@ Current state:
 - no network calls in tests
 - session/login helpers are still stubs
 
-Next goal:
-- write tests first for `_extract_error_message`, `_is_session_error`, `_is_not_found_error`, and `_extract_session_id`
-- then design (not fully implement) session handling helpers
+Next goal (tomorrow):
+- tests + implementation for `_extract_error_message`, `_is_session_error`, `_is_not_found_error`
+- tests + implementation for `_extract_session_id`
+- optional: formatting helper for pretty output
 
-Please proceed test-first, one helper at a time, and keep explanations beginner-friendly. Also, when it comes to coding coach me rather than giving me the code unless I expressly ask so I can learn.
-
+Proceed test-first, one helper at a time, and keep it beginner-friendly. Coach me through code, but do not write it for me. This is important. I'll ask for code when I want it.
