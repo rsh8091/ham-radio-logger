@@ -159,3 +159,117 @@ We implemented and validated `_http_get`, `_parse_xml`, and a new validation hel
 - Remember:
   - don’t memorize syntax
   - memorize **patterns**
+
+
+## For Tomorrow (next session)
+
+Plan for Tomorrow (2025-12-30)
+Goal
+
+Move from “foundation helpers” into real HamQTH behavior by adding XML interpretation + session scaffolding, still test-first and beginner-friendly.
+
+Step 0: Resume checklist
+
+Open repo and run baseline tests:
+
+python -m pytest -q
+
+
+Confirm everything is green before changing anything.
+
+### Step 1: XML error handling helpers (tests first)
+
+Target helpers
+
+_extract_error_message(root)
+
+_is_session_error(err_msg)
+
+_is_not_found_error(err_msg)
+
+Approach
+
+Write tests using tiny, hand-written XML strings (no network).
+
+Parse XML with your existing _parse_xml.
+
+_extract_error_message should return:
+
+the <error> text if present
+
+otherwise None
+
+_is_session_error / _is_not_found_error start as simple string-matching helpers.
+
+Stop when
+
+Tests clearly express the behavior and all pass.
+
+### Step 2: Session ID extraction (tests first)
+
+Target helper
+
+_extract_session_id(root)
+
+Approach
+
+Write tests with minimal “login response” XML snippets.
+
+Return session id string when present, else None.
+
+Stop when
+
+Tests cover “present” and “missing/malformed” and all pass.
+
+### Step 3: Session lifecycle (design first, minimal code)
+
+Target helpers
+
+_get_session_id()
+
+_login_and_create_session()
+
+Approach
+
+Add/confirm module-level cached state (session id + expiry).
+
+Write docstrings/comments describing intended behavior.
+
+Optionally write placeholder tests that describe intent (even if they fail initially).
+
+Do not wire into callbook_lookup yet.
+
+Stop when
+
+We have clear design and minimal scaffolding, but not full integration.
+
+### Step 4: Intentional stop point
+
+Stop before:
+
+real HamQTH login over the network
+
+parsing full callbook responses
+
+integrating into callbook_lookup
+
+Tomorrow is about confidence + clarity, not completeness.
+
+### Copy/paste kickoff context for the next session
+
+Paste this at the top of tomorrow’s chat:
+
+I am continuing a beginner-friendly Python HamQTH API project on Windows.
+
+Current state:
+- pytest is fully working
+- `_http_get`, `_parse_xml`, and `_require_text` are implemented and tested
+- no network calls in tests
+- session/login helpers are still stubs
+
+Next goal:
+- write tests first for `_extract_error_message`, `_is_session_error`, `_is_not_found_error`, and `_extract_session_id`
+- then design (not fully implement) session handling helpers
+
+Please proceed test-first, one helper at a time, and keep explanations beginner-friendly. Also, when it comes to coding coach me rather than giving me the code unless I expressly ask so I can learn.
+
