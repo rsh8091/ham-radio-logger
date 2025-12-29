@@ -18,10 +18,10 @@ Public interface (what your main program will import/use):
 
 # TODO: Imports you will likely need:
 # - datetime/time (for session expiry)
-# - requests (HTTP client)
-# - xml.etree.ElementTree (XML parsing)
 
 import os
+import requests
+import xml.etree.ElementTree as ET
 
 
 class HamQTHError(Exception):
@@ -32,12 +32,13 @@ class HamQTHError(Exception):
 # Configuration / constants
 # -----------------------------
 # TODO: Put HamQTH endpoints here (login URL, lookup URL).
-# TODO: Put timeout seconds here.
 # TODO: Put session lifetime seconds here (about 3600).
 # TODO: Put a short PROGRAM_NAME string here.
 
 ENV_HAMQTH_USER = "HAMQTH_USER"
 ENV_HAMQTH_PASS = "HAMQTH_PASS"
+HTTP_TIMEOUT_SECONDS = 10
+
 
 # -----------------------------
 # Module state (session cache)
@@ -128,13 +129,22 @@ def _login_and_create_session() -> str:
 
 
 def _http_get(url: str, params: dict) -> str:
-    """TODO: Perform HTTP GET with timeout; raise HamQTHError on network/HTTP failures."""
-    raise NotImplementedError
+    try:
+        response = requests.get(url, params=params, timeout=HTTP_TIMEOUT_SECONDS)
+    except requests.exceptions.RequestException as exc:
+        raise HamQTHError("Network error contacting HamQTH.") from exc
+
+    if response.status_code != 200:
+        raise HamQTHError(f"HTTP error from HamQTH (status {response.status_code}).")
+
+    return response.text
 
 
 def _parse_xml(xml_text: str):
-    """TODO: Parse XML text into an XML root object; raise HamQTHError on parse errors."""
-    raise NotImplementedError
+    try:
+        return ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise HamQTHError("Invalid XML response from HamQTH.") from exc
 
 
 def _extract_error_message(root) -> str | None:
@@ -160,3 +170,14 @@ def _is_session_error(err_msg: str) -> bool:
 def _is_not_found_error(err_msg: str) -> bool:
     """TODO: Return True if err_msg indicates callsign not found/no data."""
     raise NotImplementedError
+
+
+def _require_text(value: str, label: str) -> str:
+    if value is None:
+        raise HamQTHError(f"Nothing found for {label}.")
+
+    text = value.strip()
+    if not text:
+        raise HamQTHError(f"Nothing found for {label}.")
+
+    return text
