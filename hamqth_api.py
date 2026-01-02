@@ -149,7 +149,16 @@ def _parse_xml(xml_text: str):
 
 def _extract_error_message(root) -> str | None:
     """TODO: Return error text from the XML if present, otherwise None."""
-    raise NotImplementedError
+    search_error_message = root.find(".//error")
+    if search_error_message != None:
+        error_message = search_error_message.text
+        if error_message:
+            error_message = error_message.strip()
+            return error_message
+        else:
+            return None
+    else:
+        return None
 
 
 def _extract_session_id(root) -> str | None:
