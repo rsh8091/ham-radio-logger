@@ -148,7 +148,6 @@ def _parse_xml(xml_text: str):
 
 
 def _extract_error_message(root) -> str | None:
-    """TODO: Return error text from the XML if present, otherwise None."""
     search_error_message = root.find(".//error")
     if search_error_message != None:
         error_message = search_error_message.text
@@ -162,8 +161,16 @@ def _extract_error_message(root) -> str | None:
 
 
 def _extract_session_id(root) -> str | None:
-    """TODO: Extract session_id from login response XML."""
-    raise NotImplementedError
+    search_session_id = root.find(".//session_id")
+
+    if search_session_id is None:
+        return None
+    session_id = search_session_id.text
+    if session_id:
+        session_id = session_id.strip()
+        return session_id
+    else:
+        return None
 
 
 def _extract_search_fields(root) -> dict:
@@ -172,13 +179,17 @@ def _extract_search_fields(root) -> dict:
 
 
 def _is_session_error(err_msg: str) -> bool:
-    """TODO: Return True if err_msg indicates invalid/expired session."""
-    raise NotImplementedError
+    if err_msg is None:
+        return False
+    err_msg = err_msg.strip().lower()
+    return "session does not exist or expired" in err_msg
 
 
 def _is_not_found_error(err_msg: str) -> bool:
-    """TODO: Return True if err_msg indicates callsign not found/no data."""
-    raise NotImplementedError
+    if err_msg is None:
+        return False
+    err_msg = err_msg.strip().lower()
+    return "callsign not found" in err_msg
 
 
 def _require_text(value: str, label: str) -> str:
