@@ -61,15 +61,15 @@ Notes:
 - Pytest infrastructure working on Windows
 - Tests do not hit the network
 
----
-
-### To Implement (In Order)
-
 1. **XML interpretation helpers**
    - `_extract_error_message(root)`
    - `_is_session_error(msg)`
    - `_is_not_found_error(msg)`
    - `_extract_session_id(root)`
+
+---
+
+### To Implement (In Order)
 
 2. **Session handling (minimal)**
    - `_login_and_create_session()`

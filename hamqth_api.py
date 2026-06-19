@@ -37,6 +37,8 @@ class HamQTHError(Exception):
 
 ENV_HAMQTH_USER = "HAMQTH_USER"
 ENV_HAMQTH_PASS = "HAMQTH_PASS"
+HAM_QTH_URL = "https://www.hamqth.com/xml.php"
+HAM_QTH_NS = "{https://www.hamqth.com}"
 HTTP_TIMEOUT_SECONDS = 10
 
 
@@ -125,7 +127,14 @@ def _get_session_id() -> str:
 
 def _login_and_create_session() -> str:
     """TODO: Make login request, parse XML, cache session id + expiry, return session id."""
-    raise NotImplementedError
+    user_name, user_pw = _load_credentials()
+    request_params = {"u": user_name, "p": user_pw}
+    xml_text = _http_get(HAM_QTH_URL, request_params)
+    xml_root = _parse_xml(xml_text)
+    session_id = _extract_session_id(xml_root)
+    if session_id is None:
+        raise HamQTHError("XML session not found")
+    return session_id
 
 
 def _http_get(url: str, params: dict) -> str:
@@ -148,7 +157,7 @@ def _parse_xml(xml_text: str):
 
 
 def _extract_error_message(root) -> str | None:
-    search_error_message = root.find(".//error")
+    search_error_message = _find_first_element(root, "error")
     if search_error_message != None:
         error_message = search_error_message.text
         if error_message:
@@ -161,14 +170,17 @@ def _extract_error_message(root) -> str | None:
 
 
 def _extract_session_id(root) -> str | None:
-    search_session_id = root.find(".//session_id")
+    search_session_id = _find_first_element(root, "session_id")
 
     if search_session_id is None:
         return None
     session_id = search_session_id.text
     if session_id:
         session_id = session_id.strip()
-        return session_id
+        if session_id == "":
+            return None
+        else:
+            return session_id
     else:
         return None
 
@@ -201,3 +213,21 @@ def _require_text(value: str, label: str) -> str:
         raise HamQTHError(f"Nothing found for {label}.")
 
     return text
+
+
+def _find_first_element(root, tag_name):
+
+    # We want to find the element with or without the name space stuff for HamQTH
+    # so first let's look for it with name space, and if we find it return it, or None if not
+
+    search_element_namespace = root.find(".//" + HAM_QTH_NS + tag_name)
+    if search_element_namespace is None:
+
+        # OK, not found with name space. See if we can find with no name space
+
+        search_element_no_namespace = root.find(".//" + tag_name)
+        if search_element_no_namespace is None:
+            return None
+        return search_element_no_namespace
+    else:
+        return search_element_namespace

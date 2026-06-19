@@ -3,7 +3,11 @@ from hamqth_api import (
     _is_not_found_error,
     _extract_session_id,
     _parse_xml,
+    _find_first_element,
 )
+import hamqth_api
+import requests
+import xml.etree.ElementTree as ET
 
 
 def test_is_session_error_returns_true_for_expired_session_message():
@@ -42,3 +46,60 @@ def test_extract_session_id_returns_none_empyt_session_id():
     )
     session_id = _extract_session_id(session_root)
     assert session_id is None
+
+
+def test_extract_session_id_returns_none_session_id_whitespace():
+    session_root = _parse_xml(
+        "<HamQTH><session><session_id>    </session_id></session></HamQTH>"
+    )
+    session_id = _extract_session_id(session_root)
+    assert session_id is None
+
+
+def test_login_and_create_session_returns_session_id(monkeypatch):
+    def fake_http_get(url, params):
+        return """
+        <HamQTH version="2.7" xmlns="https://www.hamqth.com">
+            <session>
+                <session_id>ABC123</session_id>
+            </session>
+        </HamQTH>
+        """
+
+    monkeypatch.setattr(hamqth_api, "_http_get", fake_http_get)
+    monkeypatch.setenv("HAMQTH_USER", "testuser")
+    monkeypatch.setenv("HAMQTH_PASS", "testpass")
+
+    assert hamqth_api._login_and_create_session() == "ABC123"
+
+
+def test_find_first_element_handles_namespace():
+    xml = """
+    <HamQTH version="2.7" xmlns="https://www.hamqth.com">
+        <session>
+            <session_id>ABC123</session_id>
+        </session>
+    </HamQTH>
+    """
+    root = ET.fromstring(xml)
+
+    element = _find_first_element(root, "session_id")
+
+    assert element is not None
+    assert element.text == "ABC123"
+
+
+def test_find_first_element_handles_no_namespace():
+    xml = """
+    <HamQTH version="2.7" >
+        <session>
+            <session_id>ABC123</session_id>
+        </session>
+    </HamQTH>
+    """
+    root = ET.fromstring(xml)
+
+    element = _find_first_element(root, "session_id")
+
+    assert element is not None
+    assert element.text == "ABC123"
