@@ -72,7 +72,7 @@ Notes:
 ### To Implement (In Order)
 
 2. **Session handling (minimal)**
-   - `_login_and_create_session()`
+   - `_login_and_create_session()` in progress
    - `_get_session_id()`
      - cache session id
      - track expiry
@@ -117,14 +117,17 @@ These can be added **after** the MVP works end-to-end.
 
 ---
 
+## Future logger refactor:
+
+- Existing logger currently saves/loads JSON.
+- Randy already uses another ham log format.
+- Keep HamQTH lookup output format-neutral.
+- Later add import/export adapters for the real logging format.
+- Do not mix callbook lookup logic with log persistence.
+
 ## Timeline Expectation
 
-With focused sessions, this MVP is realistic to complete **within one work week**:
-
-- Day 1: XML helpers + session ID extraction
-- Day 2: Session lifecycle (login, cache, retry)
-- Day 3: `callbook_lookup()` happy path + errors
-- Day 4: Formatting + CLI wiring + cleanup
+We are working on this as we can. So the old timeline no longer applies. That timeline was when my current job was starting
 
 ---
 
