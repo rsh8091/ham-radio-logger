@@ -54,41 +54,17 @@ Notes:
 
 ## MVP Components
 
-### Already Implemented
-- `_http_get()` — network boundary with timeout and error handling
-- `_parse_xml()` — XML parsing with exception translation
-- `_require_text()` — input validation and normalization
-- Pytest infrastructure working on Windows
-- Tests do not hit the network
+### Implemented
 
-1. **XML interpretation helpers**
-   - `_extract_error_message(root)`
-   - `_is_session_error(msg)`
-   - `_is_not_found_error(msg)`
-   - `_extract_session_id(root)`
+- The API module handles HTTP timeouts, XML parsing and namespaces, and callsign validation.
+- The module keeps the HamQTH session ID in memory for up to one hour. If HamQTH rejects it, the lookup signs in again and retries once.
+- `callbook_lookup(callsign)` returns a dictionary. `format_callbook_result()` prints the available fields from menu option 5.
+- Menu option 1 saves QSOs to the local JSONL log. Lookups run separately through option 5.
 
----
+### Pending verification
 
-### To Implement (In Order)
-
-2. **Session handling (minimal)**
-   - `_login_and_create_session()` in progress
-   - `_get_session_id()`
-     - cache session id
-     - track expiry
-     - retry login once if session error occurs
-
-3. **Lookup orchestration**
-   - `callbook_lookup(callsign)`
-     - validate input
-     - obtain session id
-     - perform lookup
-     - handle errors
-     - return parsed result as a dict
-
-4. **Formatting**
-   - `format_callbook_result(result: dict) -> str`
-   - converts lookup result into readable output
+- Run the opt-in `OK2CQR` lookup against HamQTH with a real account.
+- Try option 5 with JAWS and confirm the prompts and result are easy to follow.
 
 ---
 
@@ -110,7 +86,7 @@ These can be added **after** the MVP works end-to-end.
 ## Testing Philosophy
 
 - All helpers are developed **test-first**
-- Network calls are always mocked
+- The regular suite uses mocked network responses. The live lookup test runs only when explicitly enabled.
 - XML samples are small and hand-written
 - Helpers do one thing and return simple values
 - Errors are translated into `HamQTHError` with friendly messages
@@ -137,5 +113,5 @@ If chat context is lost, this MVP file plus the test suite is sufficient to resu
 
 One-line context summary:
 
-> We are building a test-first Python HamQTH callsign lookup MVP on Windows. HTTP, XML parsing, and input validation helpers are complete and tested. Next we are implementing XML error/session helpers, minimal session handling, and readable callsign output.
+> The Windows terminal logger supports local QSO logging and standalone HamQTH lookup. The offline tests pass. The authenticated live lookup and JAWS walkthrough are pending. See the [November 19 checkpoint](docs/notes/2026-11-19-hamqth-lookup-checkpoint.md) for the next update.
 

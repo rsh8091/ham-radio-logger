@@ -16,37 +16,27 @@ Public interface (what your main program will import/use):
 - callbook_lookup(call_sign: str) -> dict
 """
 
-# TODO: Imports you will likely need:
-# - datetime/time (for session expiry)
-
 import os
-import requests
+import re
 import xml.etree.ElementTree as ET
+from time import monotonic
+
+import requests
 
 
 class HamQTHError(Exception):
     """Raised for any user-facing HamQTH error."""
 
 
-# -----------------------------
-# Configuration / constants
-# -----------------------------
-# TODO: Put HamQTH endpoints here (login URL, lookup URL).
-# TODO: Put session lifetime seconds here (about 3600).
-# TODO: Put a short PROGRAM_NAME string here.
-
 ENV_HAMQTH_USER = "HAMQTH_USER"
 ENV_HAMQTH_PASS = "HAMQTH_PASS"
 HAM_QTH_URL = "https://www.hamqth.com/xml.php"
 HAM_QTH_NS = "{https://www.hamqth.com}"
 HTTP_TIMEOUT_SECONDS = 10
+SESSION_LIFETIME_SECONDS = 3600
+PROGRAM_NAME = "ham-radio-logger"
 
-
-# -----------------------------
-# Module state (session cache)
-# -----------------------------
-# TODO: Store session id and expiry here.
-# Example idea:
+_session: tuple[str, float] | None = None
 
 
 # -----------------------------
@@ -77,16 +67,33 @@ def callbook_lookup(call_sign: str) -> dict:
         - callsign not found
         - response format is unexpected
     """
-    # TODO:
-    # 1) Validate + normalize call_sign
-    # 2) Ensure session id exists and is valid
-    # 3) Make lookup request
-    # 4) Parse XML response
-    # 5) Detect "invalid session" -> refresh session and retry once
-    # 6) Detect "not found" -> raise HamQTHError
-    # 7) Extract fields + normalize into V1 dict
-    # 8) Return dict
-    raise NotImplementedError
+    global _session
+
+    call_sign = _require_text(call_sign, "callsign")
+    if (
+        not re.fullmatch(r"[A-Za-z0-9]+(?:/[A-Za-z0-9]+)*", call_sign)
+        or not any(character.isalpha() for character in call_sign)
+        or not any(character.isdigit() for character in call_sign)
+    ):
+        raise HamQTHError("Enter a callsign with letters and numbers, such as AG5XY.")
+    call_sign = call_sign.upper()
+
+    for _ in range(2):
+        params = {"id": _get_session_id(), "callsign": call_sign, "prg": PROGRAM_NAME}
+        root = _parse_xml(_http_get(HAM_QTH_URL, params))
+        error = _extract_error_message(root)
+        if _is_session_error(error):
+            _session = None
+            continue
+        if _is_not_found_error(error):
+            raise HamQTHError(f"{call_sign} was not found in the HamQTH callbook.")
+        if error:
+            raise HamQTHError(f"HamQTH lookup failed: {error}")
+        return _extract_search_fields(root)
+
+    raise HamQTHError(
+        "HamQTH rejected the session after signing in again. Try again later."
+    )
 
 
 # -----------------------------
@@ -121,19 +128,32 @@ def _load_credentials() -> tuple[str, str]:
 
 
 def _get_session_id() -> str:
-    """TODO: Return cached session id if valid, otherwise log in and cache a new one."""
-    raise NotImplementedError
+    """Reuse the current session until its one-hour lifetime ends."""
+    global _session
+
+    now = monotonic()
+    if _session is not None:
+        session_id, expires_at = _session
+        if now < expires_at:
+            return session_id
+
+    session_id = _login_and_create_session()
+    _session = (session_id, now + SESSION_LIFETIME_SECONDS)
+    return session_id
 
 
 def _login_and_create_session() -> str:
-    """TODO: Make login request, parse XML, cache session id + expiry, return session id."""
+    """Log in to HamQTH and return the session ID from the response."""
     user_name, user_pw = _load_credentials()
     request_params = {"u": user_name, "p": user_pw}
     xml_text = _http_get(HAM_QTH_URL, request_params)
     xml_root = _parse_xml(xml_text)
+    error = _extract_error_message(xml_root)
+    if error:
+        raise HamQTHError(f"HamQTH login failed: {error}")
     session_id = _extract_session_id(xml_root)
     if session_id is None:
-        raise HamQTHError("XML session not found")
+        raise HamQTHError("HamQTH login did not return a session ID.")
     return session_id
 
 
@@ -186,18 +206,44 @@ def _extract_session_id(root) -> str | None:
 
 
 def _extract_search_fields(root) -> dict:
-    """TODO: Extract <search> fields from lookup XML into a raw dict."""
-    raise NotImplementedError
+    """Map HamQTH's XML fields to the fields used by the logger."""
+    search = _find_first_element(root, "search")
+    if search is None:
+        raise HamQTHError(
+            "Unexpected lookup response from HamQTH. No search result found."
+        )
+
+    fields = {
+        child.tag.removeprefix(HAM_QTH_NS).lower(): (child.text or "").strip()
+        for child in search
+    }
+    call_sign = fields.get("callsign")
+    if not call_sign:
+        raise HamQTHError("Unexpected lookup response from HamQTH. No callsign found.")
+
+    result = {"call_sign": call_sign.upper()}
+    for xml_field, result_field in (
+        ("nick", "name"),
+        ("qth", "city"),
+        ("us_state", "state"),
+        ("country", "country"),
+        ("cq", "cq_zone"),
+        ("itu", "itu_zone"),
+    ):
+        value = fields.get(xml_field)
+        if value:
+            result[result_field] = value
+    return result
 
 
-def _is_session_error(err_msg: str) -> bool:
+def _is_session_error(err_msg: str | None) -> bool:
     if err_msg is None:
         return False
     err_msg = err_msg.strip().lower()
     return "session does not exist or expired" in err_msg
 
 
-def _is_not_found_error(err_msg: str) -> bool:
+def _is_not_found_error(err_msg: str | None) -> bool:
     if err_msg is None:
         return False
     err_msg = err_msg.strip().lower()

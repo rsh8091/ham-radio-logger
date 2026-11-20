@@ -1,14 +1,12 @@
 """
 Ham Radio Logger
-
-This file defines the main menu loop and stub functions
-for the different actions. The actual logic (file I/O,
-QSO prompts, stats, etc.) need to be implemented in the TODOs.
 """
 
 import json  # will be useful later
 import os  # will be useful later
 from collections import Counter
+
+import hamqth_api
 
 # For now, keep the log file simple and in the same folder
 LOG_FILE = "qsolog.jsonl"
@@ -311,30 +309,40 @@ def handle_show_stats() -> None:
     return None
 
 
+def format_callbook_result(result: dict) -> str:
+    """Format the result one field per line for terminal and screen reader users."""
+    qth = ", ".join(result[field] for field in ("city", "state") if field in result)
+    lines = [f"Callsign: {result['call_sign']}"]
+    for label, value in (
+        ("Name", result.get("name")),
+        ("QTH", qth),
+        ("Country", result.get("country")),
+        ("CQ zone", result.get("cq_zone")),
+        ("ITU zone", result.get("itu_zone")),
+    ):
+        if value:
+            lines.append(f"{label}: {value}")
+    return "\n".join(lines)
+
+
 def handle_hamqth_callbook_lookup() -> None:
-    """
-    Stub handler for HamQTH callbook lookup.
-
-    Future behavior:
-    - Prompt for a callsign
-    - Call hamqth_api.callbook_lookup(callsign)
-    - Display selected callbook fields
-
-    For now:
-    - Just collect input and confirm flow works
-    """
+    """Prompt for a callsign and show the lookup result or a readable error."""
     print()
     print("HamQTH Callbook Lookup")
     print("Enter callsign to look up:")
-    call_sign = input().strip().upper()
+    call_sign = input().strip()
 
     if call_sign == "":
         print("No callsign entered. Returning to main menu.")
         return None
 
-    # Placeholder until API logic is implemented
-    print(f"(Stub) Would look up HamQTH callbook info for {call_sign}.")
-    return None
+    try:
+        result = hamqth_api.callbook_lookup(call_sign)
+    except hamqth_api.HamQTHError as exc:
+        print(exc)
+        return
+
+    print(format_callbook_result(result))
 
 
 def main():

@@ -6,6 +6,7 @@ from hamqth_api import (
     _find_first_element,
 )
 import hamqth_api
+import pytest
 import requests
 import xml.etree.ElementTree as ET
 
@@ -71,6 +72,29 @@ def test_login_and_create_session_returns_session_id(monkeypatch):
     monkeypatch.setenv("HAMQTH_PASS", "testpass")
 
     assert hamqth_api._login_and_create_session() == "ABC123"
+
+
+@pytest.mark.parametrize(
+    ("session_xml", "message"),
+    [
+        ("<error>Wrong user name or password</error>", "Wrong user name or password"),
+        ("<session_id> </session_id>", "did not return a session ID"),
+    ],
+)
+def test_login_rejects_unsuccessful_responses(monkeypatch, session_xml, message):
+    monkeypatch.setenv("HAMQTH_USER", "testuser")
+    monkeypatch.setenv("HAMQTH_PASS", "testpass")
+    monkeypatch.setattr(
+        hamqth_api,
+        "_http_get",
+        lambda url, params: (
+            '<HamQTH xmlns="https://www.hamqth.com">'
+            f"<session>{session_xml}</session></HamQTH>"
+        ),
+    )
+
+    with pytest.raises(hamqth_api.HamQTHError, match=message):
+        hamqth_api._login_and_create_session()
 
 
 def test_find_first_element_handles_namespace():
