@@ -21,20 +21,11 @@ Choose **1** to log a QSO, **2** to list recent QSOs, or **3** to search the loc
 
 Option **5** uses your HamQTH account. Use your callsign as the username. If you need an account, select **Join us** on the [HamQTH sign-in page](https://www.hamqth.com/login).
 
-Set the credentials in the current PowerShell session. The prompt keeps your password out of command history. Keep real credentials out of Git, source files, and `.env` files.
+Choose **5** and enter `OK2CQR` to try a lookup. When sign-in is needed, enter your own callsign and then your password. The password prompt keeps your typing hidden. Press **Enter** at an empty sign-in prompt to return to the menu.
 
-```powershell
-$hamQthCredential = Get-Credential -Message 'Enter your HamQTH username and password'
-$env:HAMQTH_USER = $hamQthCredential.UserName
-$env:HAMQTH_PASS = $hamQthCredential.GetNetworkCredential().Password
-Remove-Variable hamQthCredential
-```
+The logger sends the password to HamQTH API v2 over HTTPS and keeps the session token in memory for up to an hour. Keep real credentials out of Git, source files, and `.env` files.
 
-Start the logger from that session, choose **5**, and enter `OK2CQR` to try a lookup. When you finish using HamQTH, close the PowerShell session or clear both variables.
-
-```powershell
-Remove-Item Env:HAMQTH_USER, Env:HAMQTH_PASS
-```
+Lookup results include the supported fields HamQTH has available for that callsign. A valid result may only include a few fields.
 
 ## Run tests
 
@@ -46,11 +37,11 @@ The regular tests use simulated HamQTH responses and a temporary QSO log. They s
 
 ### Test a live callsign lookup
 
-After setting `HAMQTH_USER` and `HAMQTH_PASS` as shown above, run this in the same PowerShell session. The test signs in to HamQTH and checks that the service returns `OK2CQR`.
+Run this in an interactive PowerShell terminal. The test uses the logger's sign-in prompts and checks that HamQTH returns `OK2CQR`. The `-s` flag lets the prompts use your terminal.
 
 ```powershell
 $env:HAMQTH_LIVE_TEST = '1'
-.\venv\Scripts\python.exe -m pytest -q tests/test_hamqth_live.py
+.\venv\Scripts\python.exe -m pytest -q -s tests/test_hamqth_live.py
 Remove-Item Env:HAMQTH_LIVE_TEST
 ```
 

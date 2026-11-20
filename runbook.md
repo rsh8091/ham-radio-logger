@@ -16,14 +16,14 @@ This project is intentionally incremental and educational.
 ### CLI / Main Logic
 - Handles user interaction
 - Calls helper functions for logging, search, stats
-- Will call API functions (no API logic lives in the CLI)
+- Calls the HamQTH API client for callbook lookups
 
 ### HamQTH API Module (`hamqth_api.py`)
 - Owns *all* HamQTH behavior:
   - credentials
   - session handling
   - HTTP requests
-  - XML parsing
+  - JSON parsing
 - Exposes a small public interface
 - Raises `HamQTHError` with user-friendly messages
 - Contains internal helper functions, developed one at a time
@@ -35,16 +35,9 @@ This project is intentionally incremental and educational.
 
 ---
 
-## Environment Variables
+## HamQTH credentials
 
-The HamQTH API module expects credentials via environment variables:
-
-- `HAMQTH_USER`
-- `HAMQTH_PASS`
-
-These must be set before making any API calls.
-
-Credentials are **never** hard-coded in the source.
+The CLI prompts for credentials when API v2 sign-in is needed. Password input is hidden, and the API client keeps only the session token and its expiry in memory. Follow the [README](README.md) to run a lookup or the opt-in live test.
 
 ---
 

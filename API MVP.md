@@ -19,7 +19,7 @@ The MVP is complete when:
   1. Validates the callsign
   2. Logs in to HamQTH if needed
   3. Performs a callsign lookup
-  4. Parses the XML response
+  4. Parses the JSON response
   5. Prints a human-readable summary
 - Common failures are handled gracefully:
   - invalid or missing credentials
@@ -56,15 +56,15 @@ Notes:
 
 ### Implemented
 
-- The API module handles HTTP timeouts, XML parsing and namespaces, and callsign validation.
-- The module keeps the HamQTH session ID in memory for up to one hour. If HamQTH rejects it, the lookup signs in again and retries once.
-- `callbook_lookup(callsign)` returns a dictionary. `format_callbook_result()` prints the available fields from menu option 5.
+- The API module handles callsign validation, HTTP timeouts, and HamQTH v2 JSON responses.
+- The module keeps the session token in memory for up to one hour. If HamQTH rejects it, the lookup prompts for sign-in again and retries once.
+- `callbook_lookup()` returns a dictionary. `format_callbook_result()` prints the available fields from menu option 5.
 - Menu option 1 saves QSOs to the local JSONL log. Lookups run separately through option 5.
 
-### Pending verification
+### Live verification
 
-- Run the opt-in `OK2CQR` lookup against HamQTH with a real account.
-- Try option 5 with JAWS and confirm the prompts and result are easy to follow.
+- November 20, 2026. Randy confirmed that option 5 returned live callsign results with his HamQTH account.
+- The opt-in `OK2CQR` pytest test is available for a repeatable live check.
 
 ---
 
@@ -87,7 +87,7 @@ These can be added **after** the MVP works end-to-end.
 
 - All helpers are developed **test-first**
 - The regular suite uses mocked network responses. The live lookup test runs only when explicitly enabled.
-- XML samples are small and hand-written
+- JSON fixtures model HamQTH responses and HTTP status codes
 - Helpers do one thing and return simple values
 - Errors are translated into `HamQTHError` with friendly messages
 
@@ -113,5 +113,5 @@ If chat context is lost, this MVP file plus the test suite is sufficient to resu
 
 One-line context summary:
 
-> The Windows terminal logger supports local QSO logging and standalone HamQTH lookup. The offline tests pass. The authenticated live lookup and JAWS walkthrough are pending. See the [November 19 checkpoint](docs/notes/2026-11-19-hamqth-lookup-checkpoint.md) for the next update.
+> The Windows terminal logger supports local QSO logging and standalone HamQTH v2 lookup. The offline tests pass, and a live lookup through option 5 succeeded. See the [project checkpoint](docs/notes/2026-11-19-hamqth-lookup-checkpoint.md) for the next update.
 

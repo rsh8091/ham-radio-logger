@@ -2,8 +2,10 @@
 Ham Radio Logger
 """
 
+import getpass
 import json  # will be useful later
 import os  # will be useful later
+import warnings
 from collections import Counter
 
 import hamqth_api
@@ -325,6 +327,28 @@ def format_callbook_result(result: dict) -> str:
     return "\n".join(lines)
 
 
+def prompt_for_hamqth_credentials() -> tuple[str, str]:
+    """Read sign-in details from the terminal and require hidden password input."""
+    try:
+        callsign = input("HamQTH account callsign (Enter to cancel): ").strip().upper()
+        if not callsign:
+            raise hamqth_api.HamQTHError("HamQTH sign-in canceled.")
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", getpass.GetPassWarning)
+            password = getpass.getpass("HamQTH password (Enter to cancel): ")
+    except getpass.GetPassWarning:
+        raise hamqth_api.HamQTHError(
+            "Cannot hide password input. Start the logger in an interactive terminal."
+        ) from None
+    except (EOFError, KeyboardInterrupt):
+        raise hamqth_api.HamQTHError("HamQTH sign-in canceled.") from None
+
+    if not password:
+        raise hamqth_api.HamQTHError("HamQTH sign-in canceled.")
+    return callsign, password
+
+
 def handle_hamqth_callbook_lookup() -> None:
     """Prompt for a callsign and show the lookup result or a readable error."""
     print()
@@ -337,7 +361,9 @@ def handle_hamqth_callbook_lookup() -> None:
         return None
 
     try:
-        result = hamqth_api.callbook_lookup(call_sign)
+        result = hamqth_api.callbook_lookup(
+            call_sign, get_credentials=prompt_for_hamqth_credentials
+        )
     except hamqth_api.HamQTHError as exc:
         print(exc)
         return

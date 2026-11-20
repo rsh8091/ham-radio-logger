@@ -2,7 +2,7 @@
 
 November 19, 2026
 
-## Working behavior
+## Initial XML implementation
 
 - Menu option 1 saves a confirmed QSO to `qsolog.jsonl`. Option 5 validates a callsign, looks it up in HamQTH, and prints the available fields one per line.
 - The legacy XML client reuses a session ID for up to an hour. When HamQTH rejects a session, the client signs in again and retries the lookup once.
@@ -17,3 +17,9 @@ Use temporary PowerShell environment variables for the current client, following
 1. Move sign-in to [HamQTH API v2](https://www.hamqth.com/developers). Its HTTPS POST puts the password in the request body and subsequent lookups use a short-lived token. Prompt for the password when needed and keep the session token in memory.
 2. Run the live `OK2CQR` test and try menu option 5 with JAWS.
 3. Consider offering an optional lookup after the callsign prompt in option 1. Continue collecting QSO details if the lookup fails. Revisit result caching if repeat lookups become common.
+
+## API v2 follow-up
+
+The logger sends an HTTPS POST to sign in and uses the returned token for JSON callbook lookups. Option 5 prompts for your account callsign and hides password input. The offline tests cover the request layout, token expiry and retry, and logging through the existing menu.
+
+On November 20, 2026, Randy confirmed that live callsign lookups worked through option 5. The fields displayed can vary with the data HamQTH has for the callsign and the operator's privacy preferences.

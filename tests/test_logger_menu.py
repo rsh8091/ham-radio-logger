@@ -1,6 +1,12 @@
+import getpass
 import json
 import runpy
+import warnings
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+import requests
 
 import hamqth_api
 
@@ -9,25 +15,31 @@ LOGGER = Path(__file__).resolve().parents[1] / "ham-radio-logger.py"
 
 
 def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
-    entries = iter(["1", "k1abc", "59", "57", "20m", "ssb", "", "y", "5", "k1abc", "6"])
+    entries = iter(
+        ["1", "k1abc", "59", "57", "20m", "ssb", "", "y", "5", "k1abc", " ag5xy ", "6"]
+    )
     monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("HAMQTH_USER", "testuser")
-    monkeypatch.setenv("HAMQTH_PASS", "testpass")
     monkeypatch.setattr(hamqth_api, "_session", None)
+    monkeypatch.setattr(getpass, "getpass", lambda prompt: "test password")
 
-    def fake_http_get(url, params):
-        if "u" in params:
-            return "<HamQTH><session><session_id>abc123</session_id></session></HamQTH>"
-        assert params["callsign"] == "K1ABC"
-        return """<HamQTH xmlns="https://www.hamqth.com">
-            <search>
-                <callsign>k1abc</callsign><nick>Pat</nick>
-                <qth>Boston</qth><us_state>MA</us_state><country> </country>
-            </search>
-        </HamQTH>"""
+    def fake_request(method, url, **kwargs):
+        assert (tmp_path / "qsolog.jsonl").read_text(encoding="utf-8")
+        if method == "POST":
+            assert kwargs["json"] == {"callsign": "AG5XY", "password": "test password"}
+            payload = {"token": "abc123", "expiresIn": 3600}
+        else:
+            assert url.endswith("/callbook/K1ABC")
+            payload = {
+                "callsign": "k1abc",
+                "nick": "Pat",
+                "qth": "Boston",
+                "region": {"usState": "MA"},
+                "country": None,
+            }
+        return SimpleNamespace(status_code=200, json=lambda: payload)
 
-    monkeypatch.setattr(hamqth_api, "_http_get", fake_http_get)
+    monkeypatch.setattr(requests, "request", fake_request)
 
     runpy.run_path(str(LOGGER), run_name="__main__")
 
@@ -35,6 +47,7 @@ def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
     assert "QSO saved" in output
     assert "Callsign: K1ABC\nName: Pat\nQTH: Boston, MA\n" in output
     assert "Country:" not in output
+    assert "test password" not in output and "abc123" not in output
     assert "Goodbye and 73!" in output
     saved_qso = json.loads((tmp_path / "qsolog.jsonl").read_text(encoding="utf-8"))
     assert saved_qso["call_sign"] == "K1ABC"
@@ -47,7 +60,7 @@ def test_lookup_failure_returns_to_main_menu(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
     monkeypatch.chdir(tmp_path)
 
-    def failed_lookup(callsign):
+    def failed_lookup(callsign, *, get_credentials):
         raise hamqth_api.HamQTHError("Network error contacting HamQTH.")
 
     monkeypatch.setattr(hamqth_api, "callbook_lookup", failed_lookup)
@@ -57,4 +70,40 @@ def test_lookup_failure_returns_to_main_menu(monkeypatch, tmp_path, capsys):
     output = capsys.readouterr().out
     assert "Network error contacting HamQTH." in output
     assert output.count("Ham Radio Logger - Main Menu") == 2
+    assert "Goodbye and 73!" in output
+
+
+@pytest.mark.parametrize(
+    ("username", "password", "message"),
+    [
+        ("", None, "HamQTH sign-in canceled."),
+        ("AG5XY", "", "HamQTH sign-in canceled."),
+        ("AG5XY", None, "Cannot hide password input"),
+    ],
+)
+def test_sign_in_cancel_or_unmasked_console_returns_to_menu(
+    monkeypatch, tmp_path, capsys, username, password, message
+):
+    entries = iter(["5", "k1abc", username, "6"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(hamqth_api, "_session", None)
+
+    def read_password(prompt):
+        assert username
+        if password is None:
+            warnings.warn("Password input may be echoed.", getpass.GetPassWarning)
+            pytest.fail("The unmasked password prompt should stop at the warning.")
+        return password
+
+    def unexpected_request(*args, **kwargs):
+        pytest.fail("A canceled sign-in must not call HamQTH.")
+
+    monkeypatch.setattr(getpass, "getpass", read_password)
+    monkeypatch.setattr(requests, "request", unexpected_request)
+
+    runpy.run_path(str(LOGGER), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert message in output
     assert "Goodbye and 73!" in output
