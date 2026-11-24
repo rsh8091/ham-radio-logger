@@ -5,9 +5,11 @@ Ham Radio Logger
 import getpass
 import json  # will be useful later
 import os  # will be useful later
+import re
 import warnings
 from collections import Counter
 from datetime import datetime, timezone
+from decimal import Decimal
 
 import hamqth_api
 
@@ -67,10 +69,27 @@ def print_qso(qso: dict) -> None:
     - Loop through dict and print.
     """
 
-    labels = {"qso_date": "QSO date (UTC)", "time_on": "Start time (UTC)"}
+    labels = {
+        "qso_date": "QSO date (UTC)",
+        "time_on": "Start time (UTC)",
+        "frequency_mhz": "Frequency (MHz)",
+    }
     for key, value in qso.items():
         label = labels.get(key, key.replace("_", " ").title())
         print(f"{label}: {value}")
+
+
+def prompt_for_frequency_mhz() -> str | None:
+    """Return the optional frequency as a decimal string in MHz."""
+    while True:
+        value = input("Enter frequency in MHz (Enter to skip): ").strip()
+        if not value:
+            return None
+        if re.fullmatch(r"[0-9]+(?:\.[0-9]*)?|\.[0-9]+", value):
+            frequency = Decimal(value)
+            if frequency > 0:
+                return format(frequency, "f")
+        print("Enter a positive frequency in MHz, such as 14.074, or press Enter to skip.")
 
 
 def handle_log_new_qso() -> None:
@@ -102,6 +121,9 @@ def handle_log_new_qso() -> None:
     print("Enter QSO band: (put mode information in mode field)")
     band = input().strip().upper()
     qso["band"] = band
+    frequency = prompt_for_frequency_mhz()
+    if frequency is not None:
+        qso["frequency_mhz"] = frequency
     print("Enter QSO mode:")
     mode = input().strip().upper()
     qso["mode"] = mode

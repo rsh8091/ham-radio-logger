@@ -33,7 +33,10 @@ def test_new_qso_keeps_utc_start_time_alongside_legacy_entries(
             return now
 
     entries = iter(
-        ["1", "k1abc", "", "59", "57", "20m", "ssb", "Good contact", "y", "2", "2", "6"]
+        [
+            "1", "k1abc", "", "59", "57", "20m", "", "ssb", "Good contact", "y",
+            "2", "2", "6",
+        ]
     )
 
     def enter_value(prompt=""):
@@ -55,16 +58,39 @@ def test_new_qso_keeps_utc_start_time_alongside_legacy_entries(
     assert new["qso_date"] == "2026-11-20"
     assert new["time_on"] == "23:59:58"
     assert new["comments"] == "Good contact"
+    assert "frequency_mhz" not in new
     output = capsys.readouterr().out
     assert "Call Sign: W1AW" in output
     assert output.count("QSO date (UTC): 2026-11-20") == 2
     assert output.count("Start time (UTC): 23:59:58") == 2
 
 
+def test_new_qso_saves_manual_frequency_in_mhz(monkeypatch, tmp_path, capsys):
+    entries = iter(
+        [
+            "1", "k1abc", "", "59", "57", "20m", "-14", "NaN", "0", "14.074050",
+            "ssb", "", "y", "6",
+        ]
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
+    monkeypatch.chdir(tmp_path)
+
+    runpy.run_path(str(LOGGER), run_name="__main__")
+
+    saved_qso = json.loads((tmp_path / "qsolog.jsonl").read_text(encoding="utf-8"))
+    assert saved_qso["band"] == "20M"
+    assert saved_qso["frequency_mhz"] == "14.074050"
+    assert saved_qso["mode"] == "SSB"
+    output = capsys.readouterr().out
+    assert "Frequency (MHz): 14.074050" in output
+    assert output.count("Enter a positive frequency in MHz") == 3
+    assert "QSO saved" in output
+
+
 def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
     entries = iter(
         [
-            "1", "k1abc", "", "59", "57", "20m", "ssb", "", "y",
+            "1", "k1abc", "", "59", "57", "20m", "", "ssb", "", "y",
             "5", "k1abc", " ag5xy ", "6",
         ]
     )
@@ -130,7 +156,7 @@ def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
 def test_optional_qth_lookup_continues_logging(
     monkeypatch, tmp_path, capsys, reply, expected_line
 ):
-    entries = iter(["1", "k1abc", "y", "59", "57", "20m", "ssb", "", "y", "6"])
+    entries = iter(["1", "k1abc", "y", "59", "57", "20m", "", "ssb", "", "y", "6"])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
     monkeypatch.chdir(tmp_path)
 
