@@ -7,6 +7,7 @@ import json  # will be useful later
 import os  # will be useful later
 import warnings
 from collections import Counter
+from datetime import datetime, timezone
 
 import hamqth_api
 
@@ -66,9 +67,9 @@ def print_qso(qso: dict) -> None:
     - Loop through dict and print.
     """
 
+    labels = {"qso_date": "QSO date (UTC)", "time_on": "Start time (UTC)"}
     for key, value in qso.items():
-        label = key
-        label = label.replace("_", " ").title()
+        label = labels.get(key, key.replace("_", " ").title())
         print(f"{label}: {value}")
 
 
@@ -79,10 +80,14 @@ def handle_log_new_qso() -> None:
     - Append it as a JSON line to LOG_FILE if the user wants, if not, return to main menu.
     """
 
-    qso = {}
+    started_at = datetime.now(timezone.utc)
     print("Enter their call sign:")
     their_call = input().strip().upper()
-    qso["call_sign"] = their_call
+    qso = {
+        "call_sign": their_call,
+        "qso_date": started_at.date().isoformat(),
+        "time_on": started_at.time().isoformat(timespec="seconds"),
+    }
     print("Enter signal report they gave you:")
     their_report = input().strip()
     qso["their_signal_report"] = their_report

@@ -19,6 +19,8 @@ Start the logger from the same folder.
 
 Choose **1** to log a QSO, **2** to list recent QSOs, or **3** to search the local log. The logger saves confirmed entries in `qsolog.jsonl` in the current folder.
 
+Option **1** captures the date and time in UTC when you start the entry and shows both in the review before saving.
+
 Option **5** uses your HamQTH account. Use your callsign as the username. If you need an account, select **Join us** on the [HamQTH sign-in page](https://www.hamqth.com/login).
 
 Choose **5** and enter `OK2CQR` to try a lookup. When sign-in is needed, enter your own callsign and then your password. The password prompt keeps your typing hidden. Press **Enter** at an empty sign-in prompt to return to the menu.

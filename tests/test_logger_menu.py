@@ -1,3 +1,4 @@
+import datetime
 import getpass
 import json
 import runpy
@@ -12,6 +13,52 @@ import hamqth_api
 
 
 LOGGER = Path(__file__).resolve().parents[1] / "ham-radio-logger.py"
+
+
+def test_new_qso_keeps_utc_start_time_alongside_legacy_entries(
+    monkeypatch, tmp_path, capsys
+):
+    old_qso = {"call_sign": "W1AW", "band": "40M", "comments": "Old entry"}
+    log_path = tmp_path / "qsolog.jsonl"
+    log_path.write_text(json.dumps(old_qso) + "\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    now = datetime.datetime(2026, 11, 20, 23, 59, 58, tzinfo=datetime.timezone.utc)
+    after_midnight = now + datetime.timedelta(seconds=5)
+
+    class TestClock(datetime.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            assert tz == datetime.timezone.utc
+            return now
+
+    entries = iter(
+        ["1", "k1abc", "59", "57", "20m", "ssb", "Good contact", "y", "2", "2", "6"]
+    )
+
+    def enter_value(prompt=""):
+        nonlocal now
+        value = next(entries)
+        if value == "k1abc":
+            now = after_midnight
+        return value
+
+    monkeypatch.setattr(datetime, "datetime", TestClock)
+    monkeypatch.setattr("builtins.input", enter_value)
+
+    runpy.run_path(str(LOGGER), run_name="__main__")
+
+    existing, new = [
+        json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert existing == old_qso
+    assert new["qso_date"] == "2026-11-20"
+    assert new["time_on"] == "23:59:58"
+    assert new["comments"] == "Good contact"
+    output = capsys.readouterr().out
+    assert "Call Sign: W1AW" in output
+    assert output.count("QSO date (UTC): 2026-11-20") == 2
+    assert output.count("Start time (UTC): 23:59:58") == 2
 
 
 def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
