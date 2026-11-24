@@ -33,7 +33,7 @@ def test_new_qso_keeps_utc_start_time_alongside_legacy_entries(
             return now
 
     entries = iter(
-        ["1", "k1abc", "59", "57", "20m", "ssb", "Good contact", "y", "2", "2", "6"]
+        ["1", "k1abc", "", "59", "57", "20m", "ssb", "Good contact", "y", "2", "2", "6"]
     )
 
     def enter_value(prompt=""):
@@ -63,7 +63,10 @@ def test_new_qso_keeps_utc_start_time_alongside_legacy_entries(
 
 def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
     entries = iter(
-        ["1", "k1abc", "59", "57", "20m", "ssb", "", "y", "5", "k1abc", " ag5xy ", "6"]
+        [
+            "1", "k1abc", "", "59", "57", "20m", "ssb", "", "y",
+            "5", "k1abc", " ag5xy ", "6",
+        ]
     )
     monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
     monkeypatch.chdir(tmp_path)
@@ -100,6 +103,55 @@ def test_menu_can_log_and_look_up_callsigns(monkeypatch, tmp_path, capsys):
     assert saved_qso["call_sign"] == "K1ABC"
     assert saved_qso["band"] == "20M"
     assert saved_qso["mode"] == "SSB"
+
+
+@pytest.mark.parametrize(
+    ("reply", "expected_line"),
+    [
+        (
+            {
+                "call_sign": "K1ABC",
+                "city": "Boston",
+                "state": "MA",
+                "country": "United States",
+            },
+            "QTH: Boston, MA, United States",
+        ),
+        (
+            {"call_sign": "K1ABC"},
+            "HamQTH has no QTH listed for this station.",
+        ),
+        (
+            hamqth_api.HamQTHError("Network error contacting HamQTH."),
+            "Network error contacting HamQTH.",
+        ),
+    ],
+)
+def test_optional_qth_lookup_continues_logging(
+    monkeypatch, tmp_path, capsys, reply, expected_line
+):
+    entries = iter(["1", "k1abc", "y", "59", "57", "20m", "ssb", "", "y", "6"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(entries))
+    monkeypatch.chdir(tmp_path)
+
+    def fake_lookup(callsign, *, get_credentials):
+        assert callsign.upper() == "K1ABC"
+        if isinstance(reply, hamqth_api.HamQTHError):
+            raise reply
+        return reply
+
+    monkeypatch.setattr(hamqth_api, "callbook_lookup", fake_lookup)
+
+    runpy.run_path(str(LOGGER), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert expected_line in output
+    assert output.index(expected_line) < output.index("Enter signal report")
+    assert "QSO saved" in output
+    saved_qso = json.loads((tmp_path / "qsolog.jsonl").read_text(encoding="utf-8"))
+    assert saved_qso["call_sign"] == "K1ABC"
+    assert saved_qso["their_signal_report"] == "59"
+    assert not saved_qso.keys() & {"city", "state", "country", "qth"}
 
 
 def test_lookup_failure_returns_to_main_menu(monkeypatch, tmp_path, capsys):

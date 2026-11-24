@@ -21,9 +21,11 @@ Choose **1** to log a QSO, **2** to list recent QSOs, or **3** to search the loc
 
 Option **1** captures the date and time in UTC when you start the entry and shows both in the review before saving.
 
-Option **5** uses your HamQTH account. Use your callsign as the username. If you need an account, select **Join us** on the [HamQTH sign-in page](https://www.hamqth.com/login).
+After entering a callsign in option **1**, press **Y** to display the station's listed location from HamQTH or **Enter** to skip. You can finish logging the QSO if the location is missing or the lookup fails.
 
-Choose **5** and enter `OK2CQR` to try a lookup. When sign-in is needed, enter your own callsign and then your password. The password prompt keeps your typing hidden. Press **Enter** at an empty sign-in prompt to return to the menu.
+Choose **5** for a standalone callsign lookup. Use your callsign as the HamQTH username. If you need an account, select **Join us** on the [HamQTH sign-in page](https://www.hamqth.com/login).
+
+Enter `OK2CQR` to try a standalone lookup. When sign-in is needed, enter your own callsign and then your password. The password prompt keeps your typing hidden. Press **Enter** at an empty sign-in prompt to cancel the lookup.
 
 The logger sends the password to HamQTH API v2 over HTTPS and keeps the session token in memory for up to an hour. Keep real credentials out of Git, source files, and `.env` files.
 

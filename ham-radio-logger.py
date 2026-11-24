@@ -82,12 +82,17 @@ def handle_log_new_qso() -> None:
 
     started_at = datetime.now(timezone.utc)
     print("Enter their call sign:")
-    their_call = input().strip().upper()
+    their_call = input().strip()
     qso = {
-        "call_sign": their_call,
+        "call_sign": their_call.upper(),
         "qso_date": started_at.date().isoformat(),
         "time_on": started_at.time().isoformat(timespec="seconds"),
     }
+    if their_call:
+        choice = input("Look up this station's QTH? Press Y for yes or Enter to skip: ")
+        if choice.strip().upper() == "Y":
+            show_qso_qth(their_call)
+
     print("Enter signal report they gave you:")
     their_report = input().strip()
     qso["their_signal_report"] = their_report
@@ -354,6 +359,32 @@ def prompt_for_hamqth_credentials() -> tuple[str, str]:
     return callsign, password
 
 
+def lookup_hamqth_callbook(call_sign: str) -> dict[str, str] | None:
+    """Look up a callsign and display any error in the current menu flow."""
+    try:
+        return hamqth_api.callbook_lookup(
+            call_sign, get_credentials=prompt_for_hamqth_credentials
+        )
+    except hamqth_api.HamQTHError as exc:
+        print(exc)
+        return None
+
+
+def show_qso_qth(call_sign: str) -> None:
+    """Show the station's listed location during QSO entry."""
+    result = lookup_hamqth_callbook(call_sign)
+    if result is None:
+        return
+
+    location = ", ".join(
+        result[field] for field in ("city", "state", "country") if field in result
+    )
+    if location:
+        print(f"QTH: {location}")
+    else:
+        print("HamQTH has no QTH listed for this station.")
+
+
 def handle_hamqth_callbook_lookup() -> None:
     """Prompt for a callsign and show the lookup result or a readable error."""
     print()
@@ -365,15 +396,9 @@ def handle_hamqth_callbook_lookup() -> None:
         print("No callsign entered. Returning to main menu.")
         return None
 
-    try:
-        result = hamqth_api.callbook_lookup(
-            call_sign, get_credentials=prompt_for_hamqth_credentials
-        )
-    except hamqth_api.HamQTHError as exc:
-        print(exc)
-        return
-
-    print(format_callbook_result(result))
+    result = lookup_hamqth_callbook(call_sign)
+    if result is not None:
+        print(format_callbook_result(result))
 
 
 def main():
